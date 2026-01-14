@@ -90,3 +90,4 @@ public class GeminiService {
             return "Sistem hatası: " + e.getMessage();
         }
     }
+}

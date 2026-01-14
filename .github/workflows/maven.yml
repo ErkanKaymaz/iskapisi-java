@@ -49,6 +49,8 @@ jobs:
 
       - name: Uygulamayı Sunucuda Başlat (SSH)
         uses: appleboy/ssh-action@master
+        env:
+          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
@@ -56,15 +58,16 @@ jobs:
           port: 22
           timeout: 60s
           command_timeout: 20m
+          envs: GEMINI_KEY
           script: |
             echo "Port 8080 temizleniyor..."
-          
             fuser -k -n tcp 8080 || true
             
             echo "Temizlik yapıldı, 3 saniye bekleniyor..."
             sleep 3
             
             echo "Yeni uygulama başlatılıyor..."
-            nohup java -jar /home/ubuntu/target/isinolsun-0.0.1-SNAPSHOT.jar > /home/ubuntu/log.txt 2>&1 &
             
-            echo "ISLEM TAMAM! Gecmis olsun 🚀"
+            nohup java -Dgemini.api.key=$GEMINI_KEY -jar /home/ubuntu/target/isinolsun-0.0.1-SNAPSHOT.jar > /home/ubuntu/log.txt 2>&1 &
+            
+            echo "ISLEM TAMAM! 🚀"

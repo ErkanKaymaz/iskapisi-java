@@ -14,7 +14,6 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
- 
           MYSQL_DATABASE: isinolsun_db
           MYSQL_ROOT_PASSWORD: root
         ports:
@@ -26,10 +25,8 @@ jobs:
           --health-retries=10
 
     steps:
-
       - name: Kodu Çek
         uses: actions/checkout@v4
-
 
       - name: JDK 17 Kurulumu
         uses: actions/setup-java@v4
@@ -38,10 +35,8 @@ jobs:
           java-version: '17'
           cache: 'maven'
 
-
       - name: Maven ile Derle
         run: mvn -B clean package -DskipTests
-
 
       - name: Dosyayı Sunucuya Gönder (SCP)
         uses: appleboy/scp-action@master
@@ -62,15 +57,14 @@ jobs:
           timeout: 60s
           command_timeout: 20m
           script: |
-            echo "Mevcut Java işlemleri temizleniyor..."
-        
-            sudo pkill -f 'java -jar' || true
+            echo "Port 8080 temizleniyor..."
+          
+            fuser -k -n tcp 8080 || true
             
-            echo "Temizlik tamam, 2 saniye bekleniyor..."
-            sleep 2
+            echo "Temizlik yapıldı, 3 saniye bekleniyor..."
+            sleep 3
             
             echo "Yeni uygulama başlatılıyor..."
-            
             nohup java -jar /home/ubuntu/target/isinolsun-0.0.1-SNAPSHOT.jar > /home/ubuntu/log.txt 2>&1 &
             
-            echo "İşlem Başarıyla Tamamlandı! 🚀"
+            echo "ISLEM TAMAM! Gecmis olsun 🚀"

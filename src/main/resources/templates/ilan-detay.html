@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>İlan Detayı</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* İlan Detayına Özel Yerel CSS */
+        .job-header { display: flex; align-items: center; gap: 20px; text-align: left; position: relative; }
+        .job-logo { width: 80px; height: 80px; border-radius: 12px; object-fit: contain; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .job-logo-placeholder { width: 80px; height: 80px; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .job-info { flex: 1; }
+        .job-info h1 { font-size: 1.5rem; margin: 0 0 5px 0; color: #1e293b; }
+        .job-info h3 { font-size: 1.1rem; margin: 0; color: #64748b; font-weight: 500; }
+        .compact-tags { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .compact-tag { font-size: 0.85rem; background: #f1f5f9; padding: 5px 10px; border-radius: 6px; color: #475569; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .description-text { color: #334155; line-height: 1.7; font-size: 1rem; white-space: pre-wrap; text-align: left; margin-top: 0; }
+        .applicant-badge { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
+        .fav-btn-large { background: white; border: 2px solid #e2e8f0; color: #cbd5e1; font-size: 1.5rem; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; text-decoration: none; }
+        .fav-btn-large:hover { border-color: #ef4444; color: #ef4444; transform: scale(1.1); }
+        .fav-btn-large.active { background: #fee2e2; border-color: #ef4444; color: #ef4444; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="brand" style="display: flex; align-items: center; gap: 2px;">
+            <img th:src="@{/logo.jpeg}" alt="İşKapısı Logo" style="height: 65px; width: auto; border-radius: 8px;">
+            <span style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">İşKapısı</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/">İlanlar</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                <a href="/basvurularim">Başvurularım</a>
+            </li>
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                <a href="/favorilerim" >Favorilerim</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null}">
+                <a href="/profil" style="color:var(--primary); font-weight:bold;">Hesabım</a>
+            </li>
+            <li th:if="${session.girisYapanKullanici != null}"><a href="/cikis" style="color:#ef4444">Çıkış</a></li>
+
+            <li th:if="${session.girisYapanKullanici == null}"><a href="/giris">Giriş</a></li>
+            <li th:if="${session.girisYapanKullanici == null}"><a href="/kayit" class="btn btn-primary">Kayıt Ol</a></li>
+        </ul>
+    </nav>
+    <div class="container" style="padding-top: 40px;">
+        
+        <div class="card" style="padding: 25px; margin-bottom: 20px;">
+            <div class="job-header">
+                <div th:if="${ilan.isveren.logoBase64 != null}">
+                    <img th:src="@{'data:image/png;base64,' + ${ilan.isveren.logoBase64}}" class="job-logo">
+                </div>
+                <div th:unless="${ilan.isveren.logoBase64 != null}" class="job-logo-placeholder">🏢</div>
+                <div class="job-info">
+                    <h1 th:text="${ilan.baslik}">İş Başlığı</h1>
+                    <h3 th:text="${ilan.isveren.sirketAdi}">Şirket Adı</h3>
+                    <div class="compact-tags">
+                        <span class="compact-tag">📍 <span th:text="${ilan.sehir}">Şehir</span></span>
+                        <span class="compact-tag" th:if="${ilan.maas != null}">💰 <span th:text="${ilan.maas}">Maaş</span></span>
+                        <span class="compact-tag">📅 <span th:text="${#temporals.format(ilan.yayinlanmaTarihi, 'dd.MM.yyyy')}">Tarih</span></span>
+                        <span class="compact-tag applicant-badge">👥 <span th:text="${basvuruSayisi}">0</span> Başvuru</span>
+                    </div>
+                </div>
+                <div th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                    <a th:href="@{/favori-islem/{id}(id=${ilan.id}, redirect='detay')}"
+                       th:class="${favoriMi} ? 'fav-btn-large active' : 'fav-btn-large'"
+                       title="Favorilere Ekle/Çıkar">
+                       <i class="fa-solid fa-heart"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="align-items: flex-start;">
+            <div class="col-half" style="flex: 2; padding-right: 20px;">
+                <div class="card" style="margin-bottom: 20px; padding: 25px; display: block;">
+                    <h3 style="margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-size: 1.2rem;">İş Tanımı</h3>
+                    <div th:text="${ilan.aciklama}" class="description-text">Açıklama...</div>
+                </div>
+                <div class="card" th:if="${ilan.isveren.enlem != null}" style="padding: 25px; display: block;">
+                    <h3 style="margin-bottom: 15px; font-size: 1.2rem;">Konum</h3>
+                    <div id="mapShow" style="width: 100%; height: 250px; border-radius: 8px; z-index: 1;"
+                         th:data-lat="${ilan.isveren.enlem}" th:data-lng="${ilan.isveren.boylam}" th:data-company="${ilan.isveren.sirketAdi}"></div>
+                </div>
+            </div>
+
+            <div class="col-half" style="flex: 1;">
+                <div class="card" style="position: sticky; top: 100px; padding: 25px; display: block;">
+                    <h3 style="margin-bottom: 15px; font-size: 1.2rem;">Başvuru İşlemi</h3>
+                    <div th:if="${basvuruYapildi or hataKodu == 'zatenvar' or basariDurumu == true}">
+                        <div th:if="${cvVarMi}" style="background: #dcfce7; color: #166534; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+                            <div style="font-size: 1.2rem; margin-bottom: 5px;">🚀 Başvurunuz İletildi!</div>
+                            <p style="margin:0; font-size: 0.9rem;">CV'niz ve bilgileriniz işverene başarıyla gönderildi. Bol şans!</p>
+                        </div>
+                        <div th:unless="${cvVarMi}">
+                            <div style="background: #dcfce7; color: #166534; padding: 15px; border-radius: 8px 8px 0 0; text-align: center;">✅ Başvurunuz Alındı.</div>
+                            <div style="background: #fffbeb; color: #92400e; padding: 15px; border: 1px solid #fcd34d; border-top: none; border-radius: 0 0 8px 8px; font-size: 0.9rem; line-height: 1.5;">
+                                ⚠️ <b>İpucu:</b> Şu an sistemde yüklü bir CV'niz yok. <br>
+                                <a href="/profil" style="color: #b45309; text-decoration: underline; font-weight: bold;">Profilinden CV yükleyerek</a> şansını artır!
+                            </div>
+                        </div>
+                    </div>
+                    <div th:unless="${basvuruYapildi or hataKodu == 'zatenvar' or basariDurumu == true}">
+                        <div th:if="${hataKodu == 'isveren'}" style="background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-size: 0.9rem;">⛔ İşverenler başvuramaz.</div>
+                        <a th:if="${session.girisYapanKullanici == null}" href="/giris" class="btn btn-primary" style="display:block; text-align:center; width: 100%; padding: 12px; font-size: 1rem; text-decoration:none;">🔑 Giriş Yap ve Başvur</a>
+                        <form th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}" th:action="@{/ilan/{id}/basvur(id=${ilan.id})}" method="post">
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1rem;">Hemen Başvur</button>
+                            <div th:unless="${cvVarMi}" style="margin-top: 10px; font-size: 0.8rem; color: #d97706; text-align: center;"><i class="fa-solid fa-triangle-exclamation"></i> CV'niz yüklü değil.</div>
+                        </form>
+                        <div th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}" style="text-align:center; color:#991b1b; padding:10px; background:#fee2e2; border-radius:8px; font-size: 0.9rem;">🔒 Kendi ilanına başvuramazsın.</div>
+                    </div>
+                    <a href="/" style="display: block; text-align: center; margin-top: 15px; text-decoration: none; color: #64748b; font-size: 0.9rem;">← İlanlara Dön</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

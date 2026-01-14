@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Profilim</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* Harita Kutusu */
+        #mapSelect { height: 300px; width: 100%; border-radius: 10px; border: 2px solid #e2e8f0; margin-top: 10px; z-index: 1; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="brand" style="display: flex; align-items: center; gap: 2px;">
+            <img th:src="@{/logo.jpeg}" alt="İşKapısı Logo" style="height: 65px; width: auto; border-radius: 8px;">
+            <span style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">İşKapısı</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/">İlanlar</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                <a href="/basvurularim">Başvurularım</a>
+            </li>
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                <a href="/favorilerim">Favorilerim</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilanlarim" style="color:var(--dark);">İlanlarım</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null}">
+                <a href="/profil" style="color:var(--primary); font-weight:800; border-bottom: 2px solid var(--primary);">Hesabım</a>
+            </li>
+            
+            <li th:if="${session.girisYapanKullanici != null}"><a href="/cikis" style="color:#ef4444">Çıkış</a></li>
+
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilan-ekle" class="btn btn-outline">+ İlan Ver</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="auth-wrapper" style="padding-top: 40px; align-items: flex-start;"> 
+        <div class="auth-box" style="max-width: 800px;"> 
+            
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: var(--primary); margin-bottom: 10px;">Profil Bilgilerim</h2>
+            </div>
+
+            <div th:if="${param.basarili}" style="background: #dcfce7; color: #166534; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                ✅ Profiliniz başarıyla güncellendi!
+            </div>
+
+            <form action="/profil/guncelle" method="post" enctype="multipart/form-data">
+                
+                <div class="form-group">
+                    <label>Telefon Numarası</label>
+                    <input type="text" name="telefon" th:value="${session.girisYapanKullanici.telefon}" placeholder="0555...">
+                </div>
+
+                <div th:if="${rol == 'ISVEREN'}">
+                    <div class="form-group">
+                        <label>Şirket Logosu</label>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <img th:if="${profil.logoBase64 != null}" 
+                                 th:src="@{'data:image/png;base64,' + ${profil.logoBase64}}" 
+                                 style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 1px solid #eee;">
+                            <input type="file" name="logoDosya" accept="image/*" style="padding: 10px;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Şirket Adı</label>
+                        <input type="text" name="sirketAdi" th:value="${profil.sirketAdi}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Konum Seçin (Haritada işaretleyin)</label>
+                        <p style="font-size: 0.8rem; color: #64748b;">Pini sürükleyerek şirketinizin tam konumunu seçin.</p>
+                        <div id="mapSelect"></div>
+                        <input type="hidden" name="enlem" id="latInput" th:value="${profil.enlem}">
+                        <input type="hidden" name="boylam" id="lngInput" th:value="${profil.boylam}">
+                       
+                    </div>
+                    
+                </div>
+
+                <div th:if="${rol == 'IS_ARAYAN'}">
+                    
+                    <div class="form-group">
+                        <label>Profil Resmi</label>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div th:if="${profilResmiBase64 != null}">
+                                <img th:src="@{'data:image/png;base64,' + ${profilResmiBase64}}" 
+                                     style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0;">
+                            </div>
+                            <div th:unless="${profilResmiBase64 != null}" 
+                                 style="width: 80px; height: 80px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
+                                <span style="font-size: 2rem;">👤</span>
+                            </div>
+                            
+                            <div style="flex: 1;">
+                                <input type="file" name="profilResmiDosya" accept="image/*" style="padding: 10px; width: 100%;">
+                                <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">Kare veya yuvarlak görünüm için uygun bir fotoğraf seçin.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Ad Soyad</label>
+                        <input type="text" name="ad" th:value="${profil.ad}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Meslek</label>
+                        <input type="text" name="meslek" th:value="${profil.meslek}">
+                    </div>
+                    <div class="form-group">
+                        <label>CV Yükle (PDF)</label>
+                        <div style="background: white; border: 2px dashed #e2e8f0; padding: 20px; border-radius: 10px; text-align: center;">
+                            <div th:if="${profil.cvDosyaAdi != null}" style="margin-bottom: 10px; color: #166534; font-weight: bold;">
+                                📄 Mevcut Dosya: <span th:text="${profil.cvDosyaAdi}">dosya.pdf</span>
+                            </div>
+                            <input type="file" name="cvDosya" accept=".pdf" style="width: 100%;">
+                            <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">Maksimum 10MB, sadece PDF.</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Özgeçmiş</label>
+                        <textarea name="ozetBilgi" rows="5" th:text="${profil.ozet_bilgi}" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px;"></textarea>
+                    </div>
+                    <div style="margin-top: 10px; margin-bottom: 20px;">
+                        <button type="button" onclick="aiTavsiyeAl()" class="btn-apply" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; width: 100%; cursor: pointer;">
+                            ✨ Yapay Zeka ile CV Analizi Yap & Taktik Al
+                        </button>
+                    </div>
+                    <div id="aiResultBox" style="display: none; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                            <span style="font-size: 1.5rem;">🤖</span>
+                            <h3 style="margin: 0; color: #4f46e5; font-size: 1.1rem;">Dijital Kariyer Koçun</h3>
+                        </div>
+                        <div id="aiContent" style="color: #334155; line-height: 1.6; font-size: 0.95rem;"></div>
+                        <div style="margin-top: 15px; text-align: right;">
+                            <button type="button" onclick="document.getElementById('aiResultBox').style.display='none'" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.9rem;">Kapat ✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; margin-top: 20px;">Güncelle</button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="/" style="color: #94a3b8; text-decoration: none;">Anasayfaya Dön</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script th:src="@{/js/main.js}"></script>
+
+</body>
+</html>

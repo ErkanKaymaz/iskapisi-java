@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Başvurular</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="brand" style="display: flex; align-items: center; gap: 2px;">
+            <img th:src="@{/logo.jpeg}" alt="İşKapısı Logo" style="height: 65px; width: auto; border-radius: 8px;">
+            <span style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">İşKapısı</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/">İlanlar</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilanlarim" style="color:var(--primary); font-weight:800; border-bottom: 2px solid var(--primary);">İlanlarım</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null}">
+                <a href="/profil" style="color:var(--dark);">Hesabım</a>
+            </li>
+            
+            <li th:if="${session.girisYapanKullanici != null}"><a href="/cikis" style="color:#ef4444">Çıkış</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilan-ekle" class="btn btn-outline">+ İlan Ver</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="container" style="padding-top: 40px;">
+        <a href="/ilanlarim" style="text-decoration: none; color: #64748b; font-size: 0.9rem; margin-bottom: 10px; display: inline-block;">← İlan Listesine Dön</a>
+
+        <h2 style="margin-bottom: 20px;">
+            <span th:text="${ilan.baslik}">İlan Başlığı</span> - Başvurular
+        </h2>
+        
+        <div th:if="${!ilan.aktif}" 
+             style="background: #fff1f2; border: 2px solid #e11d48; border-radius: 12px; padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h3 style="margin: 0; color: #9f1239;">⛔ BU İLAN YAYINDA DEĞİL</h3>
+                <p style="margin: 5px 0 0 0; color: #be123c;">İlanı kaldırdınız. Artık adaylar göremiyor.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a th:href="@{/ilan-tekrar-yayinla/{id}(id=${ilan.id})}" class="btn-apply" style="background: #0ea5e9; color: white; border: none; text-decoration: none;">🔄 Tekrar Yayınla</a>
+                <a th:href="@{/ilan-sil/{id}(id=${ilan.id})}" onclick="return confirm('Kalıcı olarak silinecek?');" class="btn-apply" style="background: #be123c; color: white; border: none; text-decoration: none;">🗑️ Komple Sil</a>
+            </div>
+        </div>
+
+        <div th:if="${basvurular.empty}" style="text-align:center; padding:50px; background:white; border-radius:10px;">
+            <p style="color:#64748b;">Henüz başvuru yok.</p>
+        </div>
+
+        <div class="row">
+            <div class="col-third" th:each="basvuru : ${basvurular}">
+                <div class="card">
+                    <div class="card-header">
+                        <div style="margin-right: 15px;">
+                            <img th:if="${adayResimleri.containsKey(basvuru.id)}" 
+                                 th:src="@{'data:image/png;base64,' + ${adayResimleri.get(basvuru.id)}}" 
+                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 1px solid #e2e8f0;">
+                            
+                            <div th:unless="${adayResimleri.containsKey(basvuru.id)}" 
+                                 style="width: 50px; height: 50px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; color: #94a3b8; font-size: 1.5rem;">
+                                 👤
+                            </div>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 th:text="${basvuru.isArayan.ad + ' ' + basvuru.isArayan.soyad}">Ad Soyad</h3>
+                            <p th:text="${basvuru.isArayan.meslek}" style="color:#64748b; font-size:0.9rem;">Meslek</p>
+                        </div>
+                        
+                        <div style="margin-left: 10px;">
+                            <span th:if="${basvuru.durum.name() == 'BEKLEMEDE'}" style="background:#f1f5f9; color:#64748b; padding:5px 10px; border-radius:5px; font-size:0.8rem; font-weight:bold;">Yeni</span>
+                            <span th:if="${basvuru.durum.name() == 'MULAKAT'}" style="background:#fff7ed; color:#ea580c; padding:5px 10px; border-radius:5px; font-size:0.8rem; font-weight:bold;">Mülakat</span>
+                            <span th:if="${basvuru.durum.name() == 'REDDEDILDI'}" style="background:#fee2e2; color:#991b1b; padding:5px 10px; border-radius:5px; font-size:0.8rem; font-weight:bold;">Red</span>
+                        </div>
+                    </div>
+
+                    <p th:text="${basvuru.isArayan.ozet_bilgi}" style="font-size:0.9rem; color:#475569; margin-bottom:15px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">Özet</p>
+
+                    <div th:if="${basvuru.durum.name() == 'MULAKAT'}" style="background:#fffbeb; padding:10px; border-radius:5px; margin-bottom:15px; border:1px solid #fcd34d;">
+                        <p style="font-weight:bold; color:#b45309; margin:0; font-size:0.9rem;">Mülakat Tarihi:</p>
+                        <p style="margin:5px 0 0 0;">🕒 <span th:text="${#temporals.format(basvuru.mulakatTarihi, 'dd MMMM yyyy HH:mm')}">Tarih</span></p>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <a th:if="${basvuru.isArayan.cvDosya != null}" 
+                           th:href="@{/basvuru/{id}/cv-indir(id=${basvuru.id})}" 
+                           target="_blank" 
+                           class="btn-outline" 
+                           style="display:block; text-align:center;">
+                           📄 CV Görüntüle
+                        </a>
+
+                        <button th:if="${basvuru.isArayan.cvDosya == null}" 
+                                onclick="Swal.fire('CV Bulunamadı', 'Bu aday profiline henüz bir CV yüklememiş.', 'info')"
+                                class="btn-outline" 
+                                style="display:block; width:100%; text-align:center; background-color:#f1f5f9; color:#94a3b8; border-color:#cbd5e1; cursor:pointer;">
+                           ❌ CV Eklenmemiş
+                        </button>
+                    </div>
+
+                    <div th:if="${basvuru.durum.name() == 'BEKLEMEDE'}" style="display: flex; gap: 5px;">
+                        <button th:onclick="'mulakatAyarla(' + ${basvuru.id} + ')'"
+                                class="btn-apply" style="flex:1; background:#f59e0b; border:none; color:white; cursor:pointer;">
+                                📅 Davet
+                        </button>
+                        <button th:onclick="'reddet(' + ${basvuru.id} + ')'"
+                                class="btn-apply" style="flex:1; background:#ef4444; border:none; color:white; cursor:pointer;">
+                                ❌ Red
+                        </button>
+                    </div>
+
+                    <div th:if="${basvuru.durum.name() == 'MULAKAT'}" style="text-align:center; padding:10px; color:#ea580c; font-weight:bold; background:#fff7ed; border-radius:8px;">
+                        ✅ Mülakat daveti gönderildi.
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formGonder(basvuruId, durum, mesaj, tarih) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/basvuru-guncelle';
+
+            const inputs = [
+                {name: 'basvuruId', value: basvuruId},
+                {name: 'durum', value: durum},
+                {name: 'mesaj', value: mesaj || ''},
+                {name: 'tarih', value: tarih || ''},
+                {name: 'ilaniKapat', value: false}
+            ];
+
+            inputs.forEach(data => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = data.name;
+                input.value = data.value;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        async function mulakatAyarla(id) {
+            const { value: formValues } = await Swal.fire({
+                title: 'Mülakata Çağır',
+                html:
+                    '<label>Tarih ve Saat:</label>' +
+                    '<input id="swal-date" type="datetime-local" class="swal2-input">' +
+                    '<label>Adaya Not:</label>' +
+                    '<textarea id="swal-msg" class="swal2-textarea" placeholder="Ofisimizde görüşmek üzere..."></textarea>',
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'Davet Et',
+                preConfirm: () => {
+                    return [
+                        document.getElementById('swal-date').value,
+                        document.getElementById('swal-msg').value
+                    ]
+                }
+            });
+
+            if (formValues) {
+                const [date, msg] = formValues;
+                if(!date) { Swal.fire('Hata', 'Tarih seçmelisiniz!', 'error'); return; }
+                formGonder(id, 'MULAKAT', msg, date);
+            }
+        }
+
+        function reddet(id) {
+            Swal.fire({
+                title: 'Başvuruyu Reddet',
+                input: 'text',
+                inputLabel: 'Sebep (Aday görecek):',
+                inputPlaceholder: 'Örn: Pozisyon kapandı...',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Reddet'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    formGonder(id, 'REDDEDILDI', result.value, null);
+                }
+            })
+        }
+    </script>
+</body>
+</html>

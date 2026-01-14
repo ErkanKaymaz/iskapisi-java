@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Giriş Yap</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-box">
+            <h2 style="text-align:center; color:var(--primary); margin-bottom:10px;">Tekrar Hoşgeldin</h2>
+            <p style="text-align:center; color:#64748b; margin-bottom:30px;">Hesabına giriş yap ve fırsatları yakala.</p>
+            
+            <div th:if="${param.error}" class="alert-error">
+                Hatalı E-posta veya Şifre!
+            </div>
+
+            <form action="/giris" method="post">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">E-Posta</label>
+                    <input type="email" name="email" required placeholder="ornek@mail.com">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">Şifre</label>
+                    <input type="password" name="sifre" required placeholder="••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;">Giriş Yap</button>
+            </form>
+            
+            <div style="text-align:center; margin-top:25px;">
+                <p style="font-size:0.95rem;">Hesabın yok mu? <a href="/kayit" style="color:var(--primary); font-weight:bold; text-decoration:none;">Kayıt Ol</a></p>
+                <a href="/" style="display:block; margin-top:15px; color:#94a3b8; text-decoration:none; font-size:0.9rem;">← Anasayfaya Dön</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>İşKapısı - Modern Kariyer Platformu</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Kartın kendisi referans noktası olsun */
+        .card {
+            position: relative; 
+        }
+
+        /* FAVORİ BUTONU GENEL STİLİ */
+        .fav-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #f1f5f9; /* Gri Arkaplan (Pasif) */
+            color: #94a3b8; /* Gri Kalp (Pasif) */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #e2e8f0;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .fav-btn:hover {
+            transform: scale(1.15); 
+            background-color: #fee2e2;
+            color: #ef4444;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .fav-btn.active {
+            background-color: #ef4444; 
+            color: white; 
+            border-color: #ef4444;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); 
+            animation: heartPop 0.3s ease-out; 
+        }
+
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- YENİ EKLENEN BAŞVURULDU STİLİ --- */
+        .btn-applied {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            background-color: #dcfce7; /* Açık Yeşil Arkaplan */
+            color: #15803d; /* Koyu Yeşil Yazı */
+            font-weight: 800;
+            border: 2px solid #bbf7d0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: default; /* Tıklanmaz imleci */
+            font-size: 0.95rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="brand" style="display: flex; align-items: center; gap: 2px;">
+            <img th:src="@{/logo.jpeg}" alt="İşKapısı Logo" style="height: 65px; width: auto; border-radius: 8px;">
+            <span style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">İşKapısı</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/" style="color:var(--primary); font-weight:800;">İlanlar</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ADMIN'}">
+                <a href="/admin" class="btn btn-primary" style="background: var(--dark); padding: 8px 20px;">Yönetim</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                <a href="/basvurularim">Başvurularım</a>
+            </li>
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                <a href="/favorilerim" >Favorilerim</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilanlarim">İlanlarım</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() != 'ADMIN'}">
+                <a href="/profil">Hesabım</a>
+            </li>
+            
+            <li th:if="${session.girisYapanKullanici != null}"><a href="/cikis" style="color:#ef4444">Çıkış</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilan-ekle" class="btn btn-outline" style="border-radius: 10px;">+ İlan Ver</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici == null}"><a href="/giris">Giriş</a></li>
+            <li th:if="${session.girisYapanKullanici == null}"><a href="/kayit" class="btn btn-primary">Kayıt Ol</a></li>
+        </ul>
+    </nav>
+
+    <div th:if="${session.girisYapanKullanici != null and bildirimler != null and !bildirimler.empty}" 
+         style="width: 90%; max-width: 1200px; margin: 20px auto; background: #fff1f2; border: 1px solid #fda4af; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+        <h4 style="margin: 0; color: #be123c; display: flex; align-items: center; gap: 10px;">🚨 Yeni Bildirimler</h4>
+        <div th:each="bildirim : ${bildirimler}" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #fecdd3; padding-bottom: 5px;">
+            <p th:text="${bildirim.mesaj}" style="margin: 0; color: #9f1239; font-size: 0.95rem;"></p>
+            <a th:href="@{/bildirim-sil/{id}(id=${bildirim.id})}" style="color: #be123c; font-weight: bold; font-size: 0.85rem; text-decoration: none;">Kapat ✕</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Hayalindeki İşi Bul</h1>
+            <p>Binlerce ilan arasından kariyerine en uygun olanı keşfet.</p>
+            
+            <form action="/" method="get" class="search-container">
+                <div class="input-group">
+                    <i class="fa-solid fa-magnifying-glass input-icon"></i>
+                    <input type="text" name="kelime" class="search-input" placeholder="Pozisyon, firma veya anahtar kelime...">
+                </div>
+                
+                <div class="input-group">
+                    <i class="fa-solid fa-location-dot input-icon"></i>
+                    <input type="text" name="sehir" class="search-input" placeholder="Şehir veya ilçe...">
+                </div>
+                
+                <button type="submit" class="search-btn">İlan Ara</button>
+            </form>
+        </div>
+
+        <h2 style="margin-bottom: 25px; font-weight: 700; color: var(--dark);">Güncel İlanlar</h2>
+
+        <div th:if="${ilanlar.empty}" style="text-align:center; padding:60px; color:#94a3b8; background:white; border-radius:24px;">
+            <i class="fa-regular fa-folder-open" style="font-size: 3rem; margin-bottom: 15px;"></i>
+            <h3>Aradığınız kriterlere uygun ilan bulunamadı.</h3>
+            <a href="/" style="display:inline-block; margin-top:10px; color:var(--primary); font-weight:600;">Tüm İlanları Göster</a>
+        </div>
+
+        <div class="row">
+            <div class="col-third" th:each="ilan : ${ilanlar}">
+                
+                <div th:class="${ilan.isVitrinde()} ? 'card featured-card' : 'card'">
+                    
+                    <a th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}"
+                       th:href="@{/favori-islem/{id}(id=${ilan.id})}"
+                       th:class="${favoriIlanIdleri != null and #lists.contains(favoriIlanIdleri, ilan.id)} ? 'fav-btn active' : 'fav-btn'"
+                       title="Favorilere Ekle/Çıkar">
+                       <i class="fa-solid fa-heart"></i>
+                    </a>
+
+                    <div>
+                        <div class="card-header">
+                             <div th:if="${ilan.isveren.logoBase64 != null}">
+                                <img th:src="@{'data:image/png;base64,' + ${ilan.isveren.logoBase64}}" 
+                                     style="width: 56px; height: 56px; object-fit: cover; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                            </div>
+                            <div th:unless="${ilan.isveren.logoBase64 != null}" class="logo-box">
+                                <i class="fa-solid fa-building"></i>
+                            </div>
+                            
+                            <div style="flex:1;">
+                                <span th:if="${ilan.isVitrinde()}" 
+                                      style="background: #fef08a; color: #854d0e; font-size: 0.7rem; padding: 3px 8px; border-radius: 20px; font-weight: 700; display: inline-block; margin-bottom: 5px;">
+                                      <i class="fa-solid fa-star"></i> ÖNE ÇIKAN
+                                </span>
+
+                                <h3 th:text="${ilan.baslik}" style="font-size:1.15rem; color:var(--dark); margin-bottom: 2px;">Başlık</h3>
+                                <p th:text="${ilan.isveren.sirketAdi}" style="font-size:0.9rem; color:#64748b; font-weight:500;">Şirket</p>
+                            </div>
+                        </div>
+                        <p th:text="${ilan.aciklama}" style="color:#475569; margin-bottom:25px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:0.95rem;">Açıklama</p>
+                        
+                        <div class="tags">
+                            <span class="tag"><i class="fa-solid fa-location-dot" style="margin-right:4px;"></i> <span th:text="${ilan.sehir}">Şehir</span></span>
+                            <span class="tag" th:if="${ilan.maas != null}"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> <span th:text="${ilan.maas}">Maaş</span></span>
+                            
+                            <span class="tag" style="background:#e0f2fe; color:#0284c7;">
+                                <i class="fa-solid fa-users" style="margin-right:4px;"></i> <span th:text="${basvuruSayilari.get(ilan.id) != null ? basvuruSayilari.get(ilan.id) : 0}">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: auto;">
+                        
+                        <a th:if="${session.girisYapanKullanici == null}" 
+                           th:href="@{/ilan/{id}(id=${ilan.id})}" 
+                           class="btn-apply">İncele</a>
+
+                        <th:block th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                            
+                            <div th:if="${basvurulanIlanlar != null and #lists.contains(basvurulanIlanlar, ilan.id)}"
+                               class="btn-applied">
+                               <i class="fa-solid fa-circle-check"></i> Başvuru Yapıldı
+                            </div>
+
+                            <a th:if="${basvurulanIlanlar == null or !#lists.contains(basvurulanIlanlar, ilan.id)}"
+                               th:href="@{/ilan/{id}(id=${ilan.id})}" 
+                               class="btn-apply">İncele ve Başvur</a>
+                        </th:block>
+
+                        <th:block th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                            
+                            <a th:if="${ilan.isveren.kullanici.id == session.girisYapanKullanici.id}"
+                               th:href="@{/ilan/{id}/basvurular(id=${ilan.id})}" 
+                               class="btn-apply" style="background:var(--primary); color:white; border:none;">Başvuruları Yönet</a>
+                            
+                            <button th:if="${ilan.isveren.kullanici.id != session.girisYapanKullanici.id}"
+                               disabled class="btn-apply" style="opacity:0.6; cursor:not-allowed;">İşveren İlanı</button>
+                        </th:block>
+                        
+                         <a th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ADMIN'}" 
+                           th:href="@{/ilan/{id}(id=${ilan.id})}" 
+                           class="btn-apply">İlanı İncele</a>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

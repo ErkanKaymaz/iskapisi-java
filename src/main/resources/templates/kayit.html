@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Kayıt Ol</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-box" style="max-width: 600px;">
+            <h2 style="text-align:center; color:var(--primary); margin-bottom:10px;">Hesap Oluştur</h2>
+            <p style="text-align:center; color:#64748b; margin-bottom:30px;">Aramıza katıl ve kariyerine yön ver.</p>
+
+            <form action="/kayit" method="post">
+                <div class="row">
+                    <div class="col-half">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">Ad Soyad / Şirket</label>
+                            <input type="text" name="isim" required placeholder="Adınız">
+                        </div>
+                    </div>
+                    <div class="col-half">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">Telefon</label>
+                            <input type="text" name="telefon" placeholder="0555...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">E-Posta</label>
+                    <input type="email" name="email" required placeholder="mail@ornek.com">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">Şifre</label>
+                    <input type="password" name="sifre" required placeholder="Güçlü bir şifre seçin">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">Hesap Türü</label>
+                    <div style="display:flex; gap:15px;">
+                        <label style="flex:1; border:2px solid #e2e8f0; padding:15px; border-radius:12px; cursor:pointer; text-align:center; background:#f8fafc; transition:0.3s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e2e8f0'">
+                            <input type="radio" name="rol" value="IS_ARAYAN" checked style="margin-bottom:5px;"> 
+                            <div style="font-weight:600; color:var(--dark);">İş Arayan</div>
+                        </label>
+                        <label style="flex:1; border:2px solid #e2e8f0; padding:15px; border-radius:12px; cursor:pointer; text-align:center; background:#f8fafc; transition:0.3s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e2e8f0'">
+                            <input type="radio" name="rol" value="ISVEREN" style="margin-bottom:5px;"> 
+                            <div style="font-weight:600; color:var(--dark);">İşveren</div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:15px;">Kayıt Ol</button>
+            </form>
+            
+            <div style="text-align:center; margin-top:25px;">
+                <p style="font-size:0.95rem;">Zaten hesabın var mı? <a href="/giris" style="color:var(--primary); font-weight:bold; text-decoration:none;">Giriş Yap</a></p>
+                <a href="/" style="display:block; margin-top:15px; color:#94a3b8; text-decoration:none; font-size:0.9rem;">← Anasayfaya Dön</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

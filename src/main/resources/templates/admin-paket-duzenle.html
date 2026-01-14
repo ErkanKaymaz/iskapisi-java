@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Paketi Düzenle</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    
+    <style>
+        /* Kutuyu daha ferah yap */
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border: 1px solid #f1f5f9;
+        }
+
+        /* Form elemanları arası boşluklar */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        /* Label düzeni */
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        /* Input alanlarını güzelleştir */
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        .form-group input:focus {
+            border-color: #f59e0b; /* Turuncu odak rengi */
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        }
+
+        /* Yan yana duran inputlar için düzen (Çakışmayı önler) */
+        .row {
+            display: flex;
+            gap: 20px; /* Aralarına 20px boşluk koy */
+            margin-bottom: 10px;
+        }
+        
+        .col-half {
+            flex: 1; /* Eşit genişlikte dağıl */
+        }
+
+        /* Kaydet Butonu */
+        .btn-save {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(217, 119, 6, 0.3);
+        }
+
+        /* İptal Linki */
+        .cancel-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+        .cancel-link:hover {
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/admin" class="brand" style="display: flex; align-items: center; gap: 2px;">
+            <img th:src="@{/logo.jpeg}" alt="İşKapısı Logo" style="height: 65px; width: auto; border-radius: 8px;">
+            <span style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">İşKapısı YÖNETİM</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/admin" style="font-weight: 600;">← Panele Dön</a></li>
+        </ul>
+    </nav>
+
+    <div class="auth-wrapper" style="padding-top: 40px; align-items: flex-start;"> 
+        <div class="auth-box" style="max-width: 600px;"> 
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: #1e293b; margin-bottom: 10px; font-weight: 800;">📦 Paketi Düzenle</h2>
+                <p style="color: #64748b;">Paket detaylarını ve fiyatlandırmayı güncelle.</p>
+            </div>
+
+            <form action="/admin/paket-guncelle" method="post">
+                <input type="hidden" name="id" th:value="${paket.id}">
+
+                <div class="form-group">
+                    <label>Paket Adı</label>
+                    <input type="text" name="ad" th:value="${paket.ad}" required placeholder="Örn: Süper Fırsat">
+                </div>
+
+                <div class="row">
+                    <div class="col-half">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Süre (Gün)</label>
+                            <input type="number" name="gun" th:value="${paket.gun}" required>
+                        </div>
+                    </div>
+                    <div class="col-half">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Fiyat (TL)</label>
+                            <input type="number" step="0.01" name="fiyat" th:value="${paket.fiyat}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">
+                    💾 Değişiklikleri Kaydet
+                </button>
+            </form>
+            
+            <div style="text-align: center;">
+                <a href="/admin" class="cancel-link">İptal ve Dön</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

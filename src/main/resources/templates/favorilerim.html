@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Favorilerim</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fav-remove-btn {
+            background: #fee2e2;
+            color: #ef4444;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .fav-remove-btn:hover {
+            background: #fecaca;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="brand" style="display: flex; align-items: center; gap: 2px;">
+            <img th:src="@{/logo.jpeg}" alt="İşKapısı Logo" style="height: 65px; width: auto; border-radius: 8px;">
+            <span style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">İşKapısı</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/">İlanlar</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                <a href="/basvurularim">Başvurularım</a>
+            </li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'IS_ARAYAN'}">
+                <a href="/favorilerim" style="color:var(--primary); font-weight:800; border-bottom: 2px solid var(--primary);">Favorilerim</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null}">
+                <a href="/profil" style="color:var(--dark);">Hesabım</a>
+            </li>
+            
+            <li th:if="${session.girisYapanKullanici != null}"><a href="/cikis" style="color:#ef4444">Çıkış</a></li>
+        </ul>
+    </nav>
+    <div class="container" style="padding-top: 40px;">
+        <h2 style="margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-heart" style="color: #ef4444;"></i> Kaydedilen İlanlar
+        </h2>
+
+        <div th:if="${favoriler.empty}" style="text-align: center; padding: 50px; background: white; border-radius: 20px;">
+            <div style="font-size: 3rem; margin-bottom: 10px;">💔</div>
+            <p style="color: #64748b; font-size: 1.1rem;">Henüz favori listeniz boş.</p>
+            <a href="/" class="btn btn-primary" style="margin-top: 15px;">İlanları Keşfet</a>
+        </div>
+
+        <div class="row">
+            <div class="col-third" th:each="fav : ${favoriler}">
+                <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+                    
+                    <div class="card-header">
+                        <div th:if="${fav.isIlani.isveren.logoBase64 != null}">
+                            <img th:src="@{'data:image/png;base64,' + ${fav.isIlani.isveren.logoBase64}}" 
+                                 style="width: 48px; height: 48px; object-fit: cover; border-radius: 10px;">
+                        </div>
+                        <div th:unless="${fav.isIlani.isveren.logoBase64 != null}" class="logo-box">🏢</div>
+                        
+                        <div>
+                            <h3 th:text="${fav.isIlani.baslik}">Başlık</h3>
+                            <p th:text="${fav.isIlani.isveren.sirketAdi}" style="font-size:0.9rem; color:#64748b">Şirket</p>
+                        </div>
+                    </div>
+
+                    <div class="tags" style="margin: 15px 0;">
+                        <span class="tag">📍 <span th:text="${fav.isIlani.sehir}">Şehir</span></span>
+                        <span class="tag">💰 <span th:text="${fav.isIlani.maas}">Maaş</span></span>
+                    </div>
+
+                    <div style="margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a th:href="@{/ilan/{id}(id=${fav.isIlani.id})}" 
+                           class="btn-apply" style="flex: 1; text-align: center;">İncele</a>
+                        
+                        <a th:href="@{/favori-islem/{id}(id=${fav.isIlani.id}, redirect='favoriler')}" 
+                           class="fav-remove-btn" title="Listeden Kaldır">
+                           <i class="fa-solid fa-trash"></i>
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

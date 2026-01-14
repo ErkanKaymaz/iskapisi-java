@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>İlanı Öne Çıkar</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .payment-container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .package-card {
+            border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; flex: 1; min-width: 250px; cursor: pointer; transition: 0.3s;
+        }
+        .package-card:hover { border-color: var(--primary); transform: translateY(-5px); }
+        .package-card.selected { border-color: var(--primary); background: #eff6ff; }
+        
+        .credit-card-box {
+            background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .cc-input { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; width: 100%; border-radius: 5px; margin-bottom: 10px; }
+        .cc-input::placeholder { color: rgba(255,255,255,0.5); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="brand" style="display: flex; align-items: center; gap: 2px;">
+            <img th:src="@{/logo.jpeg}" alt="İşKapısı Logo" style="height: 65px; width: auto; border-radius: 8px;">
+            <span style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">İşKapısı</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/">İlanlar</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilanlarim" style="color:var(--dark);">İlanlarım</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null}">
+                <a href="/profil" style="color:var(--dark);">Hesabım</a>
+            </li>
+            
+            <li th:if="${session.girisYapanKullanici != null}"><a href="/cikis" style="color:#ef4444">Çıkış</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilan-ekle" class="btn btn-outline">+ İlan Ver</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="container" style="padding-top: 40px;">
+        <h2 style="text-align: center; margin-bottom: 30px;">🚀 İlanını Binlerce Kişiye Göster!</h2>
+        
+        <form th:action="@{/ilan/{id}/paket-satin-al(id=${ilan.id})}" method="post" id="paymentForm">
+            
+            <div th:if="${param.hata}" style="background: #fee2e2; color: #b91c1c; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                ❌ Ödeme Alınamadı! Kart bilgilerini kontrol ediniz.
+            </div>
+
+            <div class="payment-container" style="margin-bottom: 40px;">
+                <label th:each="paket : ${paketler}" class="package-card" onclick="selectPackage(this)">
+                    <input type="radio" name="paketId" th:value="${paket.id}" style="display:none;">
+                    
+                    <h3 th:text="${paket.ad}" style="margin:0; color:var(--primary);">Paket Adı</h3>
+                    <div style="font-size: 2rem; font-weight: bold; margin: 10px 0;">
+                        <span th:text="${paket.fiyat}">0</span> ₺
+                    </div>
+                    <p style="color:#64748b;">⏳ <span th:text="${paket.gun}"></span> Gün boyunca en üstte!</p>
+                </label>
+            </div>
+
+            <div class="credit-card-box">
+                <h3 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">💳 Güvenli Ödeme (Iyzico)</h3>
+                
+                <label>Kart Sahibi</label>
+                <input type="text" name="kartSahibi" class="cc-input" placeholder="AD SOYAD" required>
+                
+                <label>Kart Numarası</label>
+                <input type="text" name="kartNo" class="cc-input" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex:1">
+                        <label>Ay</label>
+                        <input type="text" name="ay" class="cc-input" placeholder="MM" maxlength="2" required>
+                    </div>
+                    <div style="flex:1">
+                        <label>Yıl</label>
+                        <input type="text" name="yil" class="cc-input" placeholder="YYYY (Örn: 2028)" maxlength="4" required>
+                    </div>
+                    <div style="flex:1">
+                        <label>CVV</label>
+                        <input type="text" name="cvv" class="cc-input" placeholder="123" maxlength="3" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="payBtn" class="btn btn-primary" style="width: 100%; margin-top: 10px; background: #10b981; border: none;">✅ Ödemeyi Onayla</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function selectPackage(element) {
+            document.querySelectorAll('.package-card').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            const radio = element.querySelector('input');
+            if(radio) radio.checked = true;
+        }
+
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            
+            // 1. Önce durdur
+            e.preventDefault();
+
+            // 2. Paket Seçili mi? (JS ile Manuel Kontrol)
+            const seciliPaket = document.querySelector('input[name="paketId"]:checked');
+            
+            if (!seciliPaket) {
+                // HATA VARSA UYARI VER
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Paket Seçilmedi!',
+                    text: 'Lütfen yukarıdan bir paket seçiniz.',
+                    confirmButtonText: 'Tamam'
+                });
+                return; // Devam etme
+            }
+
+            // 3. Inputlar Boş mu?
+            if (!this.checkValidity()) {
+                this.reportValidity(); // Tarayıcı baloncuğunu göster
+                return;
+            }
+
+            // 4. Her şey tamamsa gönder
+            Swal.fire({
+                title: 'Ödeme İşleniyor...',
+                text: 'Lütfen bekleyiniz, işlem Iyzico üzerinden yapılıyor.',
+                timer: 2000,
+                timerProgressBar: true,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
+            }).then(() => {
+                this.submit();
+            });
+        });
+    </script>
+</body>
+</html>

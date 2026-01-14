@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>İlanı Düzenle</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="brand" style="display: flex; align-items: center; gap: 2px;">
+            <img th:src="@{/logo.jpeg}" alt="İşKapısı Logo" style="height: 65px; width: auto; border-radius: 8px;">
+            <span style="font-weight: 800; color: var(--primary); letter-spacing: -0.5px;">İşKapısı</span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/">İlanlar</a></li>
+            
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilanlarim" style="color:var(--dark);">İlanlarım</a>
+            </li>
+
+            <li th:if="${session.girisYapanKullanici != null}">
+                <a href="/profil" style="color:var(--dark);">Hesabım</a>
+            </li>
+            
+            <li th:if="${session.girisYapanKullanici != null}"><a href="/cikis" style="color:#ef4444">Çıkış</a></li>
+
+            <li th:if="${session.girisYapanKullanici != null and session.girisYapanKullanici.rol.name() == 'ISVEREN'}">
+                <a href="/ilan-ekle" class="btn btn-outline">+ İlan Ver</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="auth-wrapper" style="padding-top: 40px; align-items: flex-start;"> 
+        <div class="auth-box" style="max-width: 800px;"> 
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: var(--primary); margin-bottom: 10px;">İlanı Düzenle</h2>
+                <p style="color: #64748b;">İlan bilgilerini güncelleyin.</p>
+            </div>
+
+            <form action="/ilan-duzenle" method="post">
+                
+                <input type="hidden" name="id" th:value="${ilan.id}">
+
+                <div class="form-group">
+                    <label>İlan Başlığı</label>
+                    <input type="text" name="baslik" th:value="${ilan.baslik}" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-half">
+                        <div class="form-group">
+                            <label>Şehir</label>
+                            <input type="text" name="sehir" th:value="${ilan.sehir}" required>
+                        </div>
+                    </div>
+                    <div class="col-half">
+                        <div class="form-group">
+                            <label>Maaş (Opsiyonel)</label>
+                            <input type="text" name="maas" th:value="${ilan.maas}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>İş Tanımı ve Aranan Nitelikler</label>
+                    <textarea name="aciklama" rows="8" required 
+                        th:text="${ilan.aciklama}"
+                        style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; outline: none; transition: 0.3s; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem; background-color: #d97706;">
+                    Değişiklikleri Kaydet
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="/ilanlarim" style="color: #94a3b8; text-decoration: none;">İptal</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

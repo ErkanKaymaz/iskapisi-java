@@ -58,12 +58,24 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          timeout: 60s            
+          command_timeout: 20m     
           script: |
-            echo "Eski uygulama durduruluyor..."
-            sudo pkill -f 'java -jar' || true
+            echo "Mevcut Java işlemleri kontrol ediliyor..."
+          
+            pid=$(pgrep -f 'java -jar' || true)
+            
+            if [ -n "$pid" ]; then
+              echo "Eski işlem ($pid) bulundu, sonlandırılıyor..."
+              sudo kill -9 $pid
+            else
+              echo "Çalışan eski bir işlem bulunamadı, devam ediliyor."
+            fi
             
             echo "Yeni uygulama başlatılıyor..."
-          
+           
             nohup java -jar /home/ubuntu/target/isinolsun-0.0.1-SNAPSHOT.jar > /home/ubuntu/log.txt 2>&1 &
             
-            echo "İşlem Tamam! 🚀"
+            sleep 5
+            echo "İşlem Tamam! Uygulama arka planda çalışıyor. 🚀"

@@ -1,11 +1,11 @@
-name: Java Backend CI/CD
+name: Java Backend Deploy
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +18,6 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
-        
 
     - name: Build with Maven
       run: mvn -B package -DskipTests --file pom.xml
@@ -26,22 +25,25 @@ jobs:
 
     - name: Deploy to EC2
       run: |
-
+        # Anahtar dosyasını oluştur (Senin Secret ismin: EC2_SSH_KEY)
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/key.pem
         chmod 600 ~/.ssh/key.pem
+        
 
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
 
         scp -i ~/.ssh/key.pem target/*.jar ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/app.jar
 
 
         ssh -i ~/.ssh/key.pem ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+
           set +e
           
 
           pkill -f 'java -jar' || true
           
+          # Yeni uygulamayı arka planda başlat
+          # Logları app.log dosyasına yaz
           nohup java -jar /home/${{ secrets.EC2_USERNAME }}/app.jar > app.log 2>&1 &
         EOF

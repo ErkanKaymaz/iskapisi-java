@@ -11,25 +11,34 @@
             <h2 style="text-align:center; color:var(--primary); margin-bottom:10px;">Tekrar Hoşgeldin</h2>
             <p style="text-align:center; color:#64748b; margin-bottom:30px;">Hesabına giriş yap ve fırsatları yakala.</p>
             
-            <div th:if="${param.error}" class="alert-error">
+            <div th:if="${param.error}" class="alert-error" style="background-color: #fee2e2; color: #ef4444; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 0.9rem;">
                 Hatalı E-posta veya Şifre!
+            </div>
+            
+            <div th:if="${param.sifreDegisti}" class="alert-success" style="background-color: #dcfce7; color: #166534; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 0.9rem;">
+                Şifreniz başarıyla değiştirildi. Yeni şifrenizle giriş yapabilirsiniz.
             </div>
 
             <form action="/giris" method="post">
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">E-Posta</label>
-                    <input type="email" name="email" required placeholder="ornek@mail.com">
+                    <input type="email" name="email" required placeholder="ornek@mail.com" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
                 </div>
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">Şifre</label>
-                    <input type="password" name="sifre" required placeholder="••••••">
+                
+                <div class="form-group" style="margin-bottom: 5px;"> <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">Şifre</label>
+                    <input type="password" name="sifre" required placeholder="••••••" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
                 </div>
-                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;">Giriş Yap</button>
+
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                    <a href="/sifre-iste" style="color: var(--primary); font-size: 0.85rem; text-decoration: none; font-weight: 500;">Şifreni mi unuttun?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; padding: 12px; font-weight: bold;">Giriş Yap</button>
             </form>
             
             <div style="text-align:center; margin-top:25px;">
-                <p style="font-size:0.95rem;">Hesabın yok mu? <a href="/kayit" style="color:var(--primary); font-weight:bold; text-decoration:none;">Kayıt Ol</a></p>
-                <a href="/" style="display:block; margin-top:15px; color:#94a3b8; text-decoration:none; font-size:0.9rem;">← Anasayfaya Dön</a>
+                <p style="font-size:0.95rem; color:#64748b;">Hesabın yok mu? <a href="/kayit" style="color:var(--primary); font-weight:bold; text-decoration:none;">Kayıt Ol</a></p>
+                <a href="/" style="display:block; margin-top:15px; color:#94a3b8; text-decoration:none; font-size:0.9rem; transition: color 0.3s;">← Anasayfaya Dön</a>
             </div>
         </div>
     </div>

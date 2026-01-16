@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Yeni Şifre Belirle</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-box">
+            <h2 style="text-align:center; color:var(--primary); margin-bottom:10px;">Yeni Şifre</h2>
+            <p style="text-align:center; color:#64748b; margin-bottom:30px;">Mailine gelen kodu ve yeni şifreni gir.</p>
+            
+            <div th:if="${error}" class="alert-error" style="color:red; text-align:center; margin-bottom:10px;">
+                <span th:text="${error}"></span>
+            </div>
+
+            <form action="/sifre-degistir" method="post">
+                <input type="hidden" name="email" th:value="${email}">
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Doğrulama Kodu</label>
+                    <input type="text" name="kod" required placeholder="123456" style="letter-spacing: 5px; font-weight: bold; text-align: center;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Yeni Şifre</label>
+                    <input type="password" name="yeniSifre" required placeholder="••••••">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%;">Şifreyi Güncelle</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Şifre Sıfırlama</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-box">
+            <h2 style="text-align:center; color:var(--primary); margin-bottom:10px;">Şifremi Unuttum</h2>
+            <p style="text-align:center; color:#64748b; margin-bottom:30px;">E-posta adresini gir, sana bir doğrulama kodu gönderelim.</p>
+            
+            <div th:if="${error}" class="alert-error" style="background-color: #fee2e2; color: #ef4444; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; border: 1px solid #fca5a5;">
+                <span th:text="${error}">Böyle bir kullanıcı bulunamadı!</span>
+            </div>
+
+            <div th:if="${param.hata}" class="alert-error" style="background-color: #fee2e2; color: #ef4444; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 0.9rem;">
+                Beklenmedik bir hata oluştu.
+            </div>
+
+            <form action="/sifre-kod-gonder" method="post">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-body); font-size: 0.9rem;">E-Posta Adresin</label>
+                    <input type="email" name="email" required placeholder="ornek@mail.com" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; padding: 10px; font-weight: bold;">Kod Gönder</button>
+            </form>
+            
+            <div style="text-align:center; margin-top:20px;">
+                <a href="/giris" style="color:#94a3b8; text-decoration:none; font-size:0.9rem; transition: color 0.3s;">← Giriş'e Dön</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

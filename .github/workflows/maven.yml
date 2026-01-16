@@ -1,55 +1,47 @@
-name: Deploy Mail Service to EC2
+name: Java Backend CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Kodlari Cek
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
 
-    - name: Anahtarlari Ayarla
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
+        
+
+    - name: Build with Maven
+      run: mvn -B package -DskipTests --file pom.xml
+
+
+    - name: Deploy to EC2
       run: |
+
         mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_KEY }}" > ~/.ssh/ec2_key.pem
-        chmod 600 ~/.ssh/ec2_key.pem
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/key.pem
+        chmod 600 ~/.ssh/key.pem
+
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Sunucuya Baglan ve Guncelle
-      run: |
-        ssh -i ~/.ssh/ec2_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
 
-          set -e
-
-          if [ ! -d "iskapisi-mail-servisi" ]; then
-            git clone https://github.com/${{ github.repository }}.git iskapisi-mail-servisi
-          fi
-
-          cd iskapisi-mail-servisi
-          git pull origin main
+        scp -i ~/.ssh/key.pem target/*.jar ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/app.jar
 
 
-          echo "MAIL_HOST=smtp.gmail.com" > .env
-          echo "MAIL_PORT=587" >> .env
-          echo "MAIL_USER=${{ secrets.MAIL_USER }}" >> .env
-          echo "MAIL_PASS=${{ secrets.MAIL_PASS }}" >> .env
-
-
-
-          if [ ! -d "venv" ]; then
-            python3 -m venv venv
-          fi
+        ssh -i ~/.ssh/key.pem ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          set +e
           
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
 
-
-          pkill -f uvicorn || true
-          nohup uvicorn main:app --host 0.0.0.0 --port 8000 > mail.log 2>&1 &
+          pkill -f 'java -jar' || true
+          
+          nohup java -jar /home/${{ secrets.EC2_USERNAME }}/app.jar > app.log 2>&1 &
         EOF

@@ -605,4 +605,41 @@ public class WebController {
         String sirketAdi = (isveren != null) ? isveren.getSirketAdi() : "Şirketimiz";
         return geminiService.ilanMetniOlustur(baslik, sirketAdi);
     }
+    @GetMapping("/sifre-iste")
+    public String sifreIsteSayfasi() {
+        return "sifre-iste";
+    }
+
+    
+    @PostMapping("/sifre-kod-gonder")
+    public String kodGonder(@RequestParam String email, Model model) {
+        boolean sonuc = kullaniciService.sifreSifirlamaKoduGonder(email);
+        
+        if (sonuc) {
+           
+            model.addAttribute("email", email); 
+            return "sifre-yenile"; 
+        } else {
+ 
+            model.addAttribute("error", "Bu e-posta adresi kayıtlı değil!");
+            return "sifre-iste"; 
+        }
+    }
+
+    @PostMapping("/sifre-degistir")
+    public String sifreDegistir(@RequestParam String email, 
+                                @RequestParam String kod, 
+                                @RequestParam String yeniSifre,
+                                Model model) {
+        
+        boolean basarili = kullaniciService.sifreDegistir(email, kod, yeniSifre);
+        
+        if (basarili) {
+            return "redirect:/giris?sifreDegisti=true"; 
+        } else {
+            model.addAttribute("error", "Kod hatalı veya geçersiz!");
+            model.addAttribute("email", email); 
+            return "sifre-yenile"; 
+        }
+    }
 }

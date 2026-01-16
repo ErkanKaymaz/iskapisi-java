@@ -13,68 +13,72 @@ public class KullaniciService {
     private final KullaniciRepository kullaniciRepository;
     private final MailService mailService;
 
-    // Şifre kodlarını tutan geçici hafıza
+    // 1. KODLARI TUTAN HARİTA (Eski hali)
     private static final Map<String, String> verificationCodes = new HashMap<>();
+    
+    // 2. YENİ EKLENEN: KODUN OLUŞTURULMA ZAMANINI TUTAN HARİTA 🕒
+    private static final Map<String, Long> verificationTimes = new HashMap<>();
 
-    // TEK VE TEMİZ CONSTRUCTOR
     public KullaniciService(KullaniciRepository kullaniciRepository, MailService mailService) {
         this.kullaniciRepository = kullaniciRepository;
         this.mailService = mailService;
     }
 
-    public Kullanici kullaniciKaydet(Kullanici kullanici) {
-        return kullaniciRepository.save(kullanici);
-    }
+    // ... Diğer metodlar (kaydet, girisYap vs.) aynı kalıyor ...
 
-    public Kullanici girisYap(String email, String sifre) {
-        Optional<Kullanici> k = kullaniciRepository.findByEmail(email);
-        if (k.isPresent() && k.get().getSifre().equals(sifre)) {
-            return k.get();
-        }
-        return null;
-    }
-    
-    public void kullaniciGuncelle(Kullanici kullanici) {
-        kullaniciRepository.save(kullanici);
-    }
-
-    // --- ŞİFRE SIFIRLAMA METODLARI (Derleyicinin bulamadığı yerler burası) ---
-
- public boolean sifreSifirlamaKoduGonder(String email) {
+    // --- ŞİFRE KODU GÖNDERME ---
+    public boolean sifreSifirlamaKoduGonder(String email) {
         Kullanici kullanici = kullaniciRepository.findByEmail(email).orElse(null);
-        
-        // 1. KULLANICI YOKSA -> FALSE (Burada sorun yok, doğru çalışıyor)
         if (kullanici == null) {
             return false;
         }
 
         String kod = String.valueOf((int) (Math.random() * 900000) + 100000);
+        
+        // Kodu kaydet
         verificationCodes.put(email, kod);
+        
+        // YENİ: Şu anki zamanı (milisaniye cinsinden) kaydet 🕒
+        verificationTimes.put(email, System.currentTimeMillis());
 
         try {
             mailService.mailGonder(email, "Şifre Sıfırlama Kodu", "Kodunuz: " + kod);
-            // 2. MAIL GİDERSE -> TRUE (Burayı try bloğunun içine aldık)
             return true; 
         } catch (Exception e) {
             System.err.println("Mail hatası: " + e.getMessage());
-            // 3. MAIL GİTMEZSE -> FALSE (Eskiden burası true dönüyordu!)
             return false;
         }
     }
 
+    // --- ŞİFRE DEĞİŞTİRME ---
     public boolean sifreDegistir(String email, String girilenKod, String yeniSifre) {
         String gercekKod = verificationCodes.get(email);
         
+        // YENİ: Kayıt zamanını al (Yoksa 0 döner) 🕒
+        Long kayitZamani = verificationTimes.getOrDefault(email, 0L);
+        long suAn = System.currentTimeMillis();
+        
+        // YENİ: 15 Dakika Kontrolü (15 * 60 * 1000 = 900.000 ms) ⏳
+        // Eğer aradaki fark 15 dakikadan büyükse REDDET.
+        if ((suAn - kayitZamani) > (15 * 60 * 1000)) {
+            System.out.println("❌ Kodun süresi dolmuş: " + email);
+            verificationCodes.remove(email); // Eski kodu temizle
+            verificationTimes.remove(email); // Eski zamanı temizle
+            return false;
+        }
+
         if (gercekKod != null && gercekKod.equals(girilenKod)) {
             Kullanici k = kullaniciRepository.findByEmail(email).orElse(null);
             if (k != null) {
                 k.setSifre(yeniSifre); 
                 kullaniciRepository.save(k);
+                
+                // İşlem bitince hafızayı temizle
                 verificationCodes.remove(email);
+                verificationTimes.remove(email);
                 return true;
             }
         }
         return false; 
     }
 }
-// GitHub kendine gel

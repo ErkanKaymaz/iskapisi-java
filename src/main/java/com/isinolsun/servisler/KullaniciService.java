@@ -11,13 +11,12 @@ import java.util.Optional;
 public class KullaniciService {
 
     private final KullaniciRepository kullaniciRepository;
-    private final MailService mailService; // Final yaptık, constructor ile gelecek
+    private final MailService mailService;
 
     // Şifre kodlarını tutan geçici hafıza
     private static final Map<String, String> verificationCodes = new HashMap<>();
 
-    // TEK VE TEMİZ CONSTRUCTOR (Kurucu Metot)
-    // Spring Boot burayı görünce hem Repository'yi hem MailService'i otomatik doldurur.
+    // TEK VE TEMİZ CONSTRUCTOR
     public KullaniciService(KullaniciRepository kullaniciRepository, MailService mailService) {
         this.kullaniciRepository = kullaniciRepository;
         this.mailService = mailService;
@@ -39,7 +38,7 @@ public class KullaniciService {
         kullaniciRepository.save(kullanici);
     }
 
-    // --- ŞİFRE SIFIRLAMA METODLARI ---
+    // --- ŞİFRE SIFIRLAMA METODLARI (Derleyicinin bulamadığı yerler burası) ---
 
     public boolean sifreSifirlamaKoduGonder(String email) {
         Kullanici kullanici = kullaniciRepository.findByEmail(email).orElse(null);
@@ -50,11 +49,9 @@ public class KullaniciService {
         String kod = String.valueOf((int) (Math.random() * 900000) + 100000);
         verificationCodes.put(email, kod);
 
-        // Artık mailService null gelmeyecek!
         try {
             mailService.mailGonder(email, "Şifre Sıfırlama Kodu", "Kodunuz: " + kod);
         } catch (Exception e) {
-            // Mail servisi kapalıysa bile sistem çökmesin
             System.err.println("Mail hatası: " + e.getMessage());
         }
         

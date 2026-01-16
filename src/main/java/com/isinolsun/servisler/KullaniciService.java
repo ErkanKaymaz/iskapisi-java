@@ -40,8 +40,10 @@ public class KullaniciService {
 
     // --- ŞİFRE SIFIRLAMA METODLARI (Derleyicinin bulamadığı yerler burası) ---
 
-    public boolean sifreSifirlamaKoduGonder(String email) {
+ public boolean sifreSifirlamaKoduGonder(String email) {
         Kullanici kullanici = kullaniciRepository.findByEmail(email).orElse(null);
+        
+        // 1. KULLANICI YOKSA -> FALSE (Burada sorun yok, doğru çalışıyor)
         if (kullanici == null) {
             return false;
         }
@@ -51,11 +53,13 @@ public class KullaniciService {
 
         try {
             mailService.mailGonder(email, "Şifre Sıfırlama Kodu", "Kodunuz: " + kod);
+            // 2. MAIL GİDERSE -> TRUE (Burayı try bloğunun içine aldık)
+            return true; 
         } catch (Exception e) {
             System.err.println("Mail hatası: " + e.getMessage());
+            // 3. MAIL GİTMEZSE -> FALSE (Eskiden burası true dönüyordu!)
+            return false;
         }
-        
-        return true;
     }
 
     public boolean sifreDegistir(String email, String girilenKod, String yeniSifre) {

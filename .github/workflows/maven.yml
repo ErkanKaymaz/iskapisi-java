@@ -1,73 +1,55 @@
-name: CI/CD - Maven Build ve AWS EC2 Deployment
+name: Deploy Mail Service to EC2
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: isinolsun_db
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
     steps:
-      - name: Kodu Çek
-        uses: actions/checkout@v4
+    - name: Kodlari Cek
+      uses: actions/checkout@v4
 
-      - name: JDK 17 Kurulumu
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'maven'
+    - name: Anahtarlari Ayarla
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_KEY }}" > ~/.ssh/ec2_key.pem
+        chmod 600 ~/.ssh/ec2_key.pem
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Maven ile Derle
-        run: mvn -B clean package -DskipTests
+    - name: Sunucuya Baglan ve Guncelle
+      run: |
+        ssh -i ~/.ssh/ec2_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
 
-      - name: Dosyayı Sunucuya Gönder (SCP)
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "target/isinolsun-0.0.1-SNAPSHOT.jar"
-          target: "/home/ubuntu/"
+          set -e
 
-      - name: Uygulamayı Sunucuda Başlat (SSH)
-        uses: appleboy/ssh-action@master
-        env:
-          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          timeout: 60s
-          command_timeout: 20m
-          envs: GEMINI_KEY
-          script: |
-            echo "Port 8080 temizleniyor..."
-            fuser -k -n tcp 8080 || true
-            
-            echo "Temizlik yapıldı, 3 saniye bekleniyor..."
-            sleep 3
-            
-            echo "Yeni uygulama başlatılıyor..."
-            
-            nohup java -Dgemini.api.key=$GEMINI_KEY -jar /home/ubuntu/target/isinolsun-0.0.1-SNAPSHOT.jar > /home/ubuntu/log.txt 2>&1 &
-            
-            echo "ISLEM TAMAM! 🚀"
+          if [ ! -d "iskapisi-mail-servisi" ]; then
+            git clone https://github.com/${{ github.repository }}.git iskapisi-mail-servisi
+          fi
+
+          cd iskapisi-mail-servisi
+          git pull origin main
+
+
+          echo "MAIL_HOST=smtp.gmail.com" > .env
+          echo "MAIL_PORT=587" >> .env
+          echo "MAIL_USER=${{ secrets.MAIL_USER }}" >> .env
+          echo "MAIL_PASS=${{ secrets.MAIL_PASS }}" >> .env
+
+
+
+          if [ ! -d "venv" ]; then
+            python3 -m venv venv
+          fi
+          
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+
+          pkill -f uvicorn || true
+          nohup uvicorn main:app --host 0.0.0.0 --port 8000 > mail.log 2>&1 &
+        EOF

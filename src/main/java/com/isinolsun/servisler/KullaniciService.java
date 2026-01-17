@@ -1,151 +1,79 @@
 package com.isinolsun.servisler;
 
-
-
 import com.isinolsun.depolar.KullaniciRepository;
-
 import com.isinolsun.varliklar.Kullanici;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
-
 import java.util.Map;
-
 import java.util.Optional;
 
-
-
 @Service
-
 public class KullaniciService {
 
-
-
     private final KullaniciRepository kullaniciRepository;
-
-    private final MailService mailService;
-
-
-
-    // Şifre kodlarını tutan geçici hafıza
-
     private static final Map<String, String> verificationCodes = new HashMap<>();
-
-
-
-    // TEK VE TEMİZ CONSTRUCTOR
-
-    public KullaniciService(KullaniciRepository kullaniciRepository, MailService mailService) {
-
+    // MANUEL CONSTRUCTOR EKLİYORUZ
+    public KullaniciService(KullaniciRepository kullaniciRepository) {
         this.kullaniciRepository = kullaniciRepository;
-
-        this.mailService = mailService;
-
     }
-
-
 
     public Kullanici kullaniciKaydet(Kullanici kullanici) {
-
         return kullaniciRepository.save(kullanici);
-
     }
-
-
 
     public Kullanici girisYap(String email, String sifre) {
-
-        Optional<Kullanici> k = kullaniciRepository.findByEmail(email);
-
-        if (k.isPresent() && k.get().getSifre().equals(sifre)) {
-
-            return k.get();
-
+        Optional<Kullanici> kullanici = kullaniciRepository.findByEmail(email);
+        if (kullanici.isPresent() && kullanici.get().getSifre().equals(sifre)) {
+            return kullanici.get();
         }
-
         return null;
-
     }
-
-    
-
+ // Kullanıcı bilgilerini güncelle (Sadece temel bilgiler)
     public void kullaniciGuncelle(Kullanici kullanici) {
-
         kullaniciRepository.save(kullanici);
-
     }
-
-
-
-    // --- ŞİFRE SIFIRLAMA METODLARI (Derleyicinin bulamadığı yerler burası) ---
-
-
-
+    @Autowired
+    private MailService mailService;
     public boolean sifreSifirlamaKoduGonder(String email) {
-
+        // 1. Kullanıcı var mı kontrol et
         Kullanici kullanici = kullaniciRepository.findByEmail(email).orElse(null);
-
         if (kullanici == null) {
-
-            return false;
-
+            return false; // Böyle biri yok
         }
 
-
-
+        // 2. 6 haneli rastgele kod üret
         String kod = String.valueOf((int) (Math.random() * 900000) + 100000);
-
+        
+        // 3. Kodu hafızaya kaydet (Mail -> Kod eşleşmesi)
         verificationCodes.put(email, kod);
 
-
-
-        try {
-
-            mailService.mailGonder(email, "Şifre Sıfırlama Kodu", "Kodunuz: " + kod);
-
-        } catch (Exception e) {
-
-            System.err.println("Mail hatası: " + e.getMessage());
-
-        }
-
+        // 4. Python Servisi ile Mail At
+        mailService.mailGonder(email, "Şifre Sıfırlama Kodu", "Merhaba, şifre sıfırlama kodun: " + kod);
         
-
         return true;
-
     }
 
-
-
+    // ŞİFRE DEĞİŞTİRME METODU
     public boolean sifreDegistir(String email, String girilenKod, String yeniSifre) {
-
+        // 1. Kod doğru mu?
         String gercekKod = verificationCodes.get(email);
-
         
-
         if (gercekKod != null && gercekKod.equals(girilenKod)) {
-
+            // Kod doğru! Kullanıcıyı bul ve şifresini güncelle
             Kullanici k = kullaniciRepository.findByEmail(email).orElse(null);
-
             if (k != null) {
-
+                // Şifreyi güncelle (Normalde hashlemek gerekir ama şimdilik düz yapıyoruz)
                 k.setSifre(yeniSifre); 
-
                 kullaniciRepository.save(k);
-
+                
+                // Kodu hafızadan sil (Tek kullanımlık olsun)
                 verificationCodes.remove(email);
-
                 return true;
-
             }
-
         }
-
-        return false; 
-
+        return false; // Kod yanlış veya süre dolmuş
     }
-
 }
-
-// GitHub kendine gel
